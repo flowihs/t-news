@@ -1,7 +1,7 @@
 import { Router } from 'express';
-import { registerValidation, loginValidation } from '../validations/auth.js';
-import * as UserController from '../controllers/UserController.js';
-import checkAuth from '../middlewares/checkAuth.js';
+import { registerValidation, loginValidation } from '../../validations/auth.js';
+import * as UserController from './controller.js';
+import checkAuth from '../../middlewares/checkAuth.js';
 
 const router = Router();
 

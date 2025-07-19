@@ -1,9 +1,9 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
-import { catchAsync } from "../middlewares/catchAsync.js";
+import { catchAsync } from "../../middlewares/catchAsync.js";
 
-import UserModel from "../models/User.js";
+import UserModel from "../../models/User.js";
 
 export const register = catchAsync( async (req, res) => {
     const errors = validationResult(req);
