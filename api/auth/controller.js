@@ -1,7 +1,7 @@
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { validationResult } from "express-validator";
-import { catchAsync } from "../utils/catchAsync.js";
+import { catchAsync } from "../middlewares/catchAsync.js";
 
 import UserModel from "../models/User.js";
 
@@ -21,7 +21,7 @@ export const register = catchAsync( async (req, res) => {
         passwordHash: hash,
         avatarUrl: req.body.avatarUrl,
     });
-    
+
     const user = await doc.save();
 
     const token = jwt.sign({
@@ -46,7 +46,7 @@ export const login = catchAsync( async (req, res) => {
         })
     }
 
-    const isValidPass = await bcrypt.compare(req.body.password, 
+    const isValidPass = await bcrypt.compare(req.body.password,
         user._doc.passwordHash);
 
     if (!isValidPass) {
@@ -65,7 +65,7 @@ export const login = catchAsync( async (req, res) => {
         ...userData,
         token,
     })
-})  
+})
 
 export const getMe = catchAsync( async (req, res) => {
     const user = await UserModel.findById(req.userId);

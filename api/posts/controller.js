@@ -1,5 +1,5 @@
-import PostModel from "../models/Post.js";
-import { catchAsync } from "../utils/catchAsync.js";
+import PostModel from "../../models/Post.js";
+import { catchAsync } from "../../middlewares/catchAsync.js";
 
 export const create = catchAsync(async (req, res) => {
     const doc = new PostModel({
@@ -46,7 +46,7 @@ export const update = catchAsync(async (req, res) => {
         res.status(404).json({ message: "Статья не найдена" });
     }
 
-    Object.assign(post, req.body); 
+    Object.assign(post, req.body);
     const updatedPost = await post.save();
     res.json(updatedPost);
 });
@@ -66,10 +66,10 @@ export const search = catchAsync(async (req, res) => {
             { tags: { $in: [new RegExp(q, "i")]}},
         ]
     })
-    .limit(limit * 1)
-    .skip((page - 1) * limit)
-    .populate("user")
-    .exec();
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .populate("user")
+        .exec();
 
     const count = await PostModel.countDocuments({
         $or: [
