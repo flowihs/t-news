@@ -23,8 +23,10 @@ const PostSchema = mongoose.Schema({
         required: true,
     },
     imageUrl: String,
+    likesCount: { type: Number, default: 0 },
+    commentsCount: { type: Number, default: 0 },
 }, {
-    timestamp: true,
+    timestamp: true
 });
 
 export default mongoose.model("Post", PostSchema);
