@@ -141,7 +141,8 @@ export const search = catchAsync(async (req, res) => {
             totalPages: Math.ceil(count / limit),
             currentPage: page,
         });
-    } else {
+    }
+    else {
         return res.status(400).json({ message: "Неподдерживаемый тип поиска" });
     }
 });
