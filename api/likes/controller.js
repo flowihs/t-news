@@ -13,7 +13,9 @@ export const toggleLike = catchAsync(async (req, res) => {
     else return res.status(400).json({ message: "Неверный тип сущности "});
 
     const entity = await entityModel.findById(entityId);
-    if (!entity) return res.status(404).json({ message: "Сущность не найдена" });
+    if (!entity) {
+        return res.status(404).json({ message: "Сущность не найдена" });
+    }
 
     const query = { user: userId, [entityType]: entityId };
     const existingLike = await LikeModel.findOne(query);

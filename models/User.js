@@ -14,6 +14,9 @@ const UserSchema = new mongoose.Schema({
         type: String,
         required: true,
     },
+    bio: {
+        type: String, default: ''
+    },
     avatarUrl: String,
 }, {
     timestamps: true, 

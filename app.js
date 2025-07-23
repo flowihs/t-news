@@ -3,7 +3,7 @@ import cors from 'cors';
 import * as PostRouter from './api/auth/router.js';
 import * as AuthRouter from './api/posts/router.js';
 import * as LikesRouter from './api/likes/router.js';
-import * as CommentsRouter from './api/comments/routes.js';
+import * as CommentsRouter from './api/comments/router.js';
 
 const app = express();
 

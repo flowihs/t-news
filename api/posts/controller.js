@@ -1,5 +1,7 @@
 import PostModel from "../../models/Post.js";
 import { catchAsync } from "../../middlewares/catchAsync.js";
+import SubscribeModel from "../../models/Subscribe.js";
+import UserModel from "../../models/User.js";
 
 export const create = catchAsync(async (req, res) => {
     const doc = new PostModel({
@@ -33,11 +35,29 @@ export const getById = catchAsync(async (req, res) => {
 });
 
 export const deleteById = catchAsync(async (req, res) => {
-    const post = await PostModel.findByIdAndDelete(req.params.id);
+    const post = await PostModel.findById(req.params.id);
     if (!post) {
-        return res.status(404).json({ message: "Статья не найдена" });
+        return res.status(404).json({ message: "Пост не найден" });
     }
-    res.json({ message: "Статья удалена" });
+    if (post.user.toString() !== req.userId) {
+        return res.status(403).json({ message: "Нет прав для удаления этого поста" });
+    }
+
+    const session = await mongoose.startSession();
+    session.startTransaction();
+
+    try {
+        await PostModel.findByIdAndDelete(req.params.id, { session });
+        await CommentModel.deleteMany({ post: req.params.id }, { session });
+        await LikeModel.deleteMany({ post: req.params.id }, { session });
+        await session.commitTransaction();
+        res.json({ message: "Пост и все связанные данные удалены" });
+    } catch (error) {
+        await session.abortTransaction();
+        throw error;
+    } finally {
+        session.endSession();
+    }
 });
 
 export const update = catchAsync(async (req, res) => {
@@ -51,37 +71,77 @@ export const update = catchAsync(async (req, res) => {
     res.json(updatedPost);
 });
 
+export const getFeed = catchAsync(async (req, res) => {
+    const subscriptions = await SubscribeModel.find({ subscriber: req.userId });
+    const followingIds = subscriptions.map(s => s.targetUser);
+
+    const posts = await PostModel.find({ user: { $in: followingIds } })
+        .sort({ createdAt: -1 })
+        .populate('user');
+
+    res.json(posts);
+});
+
 export const search = catchAsync(async (req, res) => {
-    const { q, page = 1, limit = 10 } = req.query;
+    const { q, type = 'post', page = 1, limit = 10 } = req.query;
+
     if (!q) {
-        return res.status(400).json({
-            message: "Не указан поисковый запрос",
-        })
+        return res.status(400).json({ message: "Не указан поисковый запрос" });
     }
 
-    const posts = await PostModel.find({
-        $or: [
-            { title: { $regex: q, $options: "i" }},
-            { text: { $regex: q, $options: "1" }},
-            { tags: { $in: [new RegExp(q, "i")]}},
-        ]
-    })
-        .limit(limit * 1)
-        .skip((page - 1) * limit)
-        .populate("user")
-        .exec();
+    if (type === 'post') {
+        const posts = await PostModel.find({
+            $or: [
+                { title: { $regex: q, $options: "i" }},
+                { text: { $regex: q, $options: "i" }},
+                { tags: { $in: [new RegExp(q, "i")] }},
+            ]
+        })
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .populate("user")
+            .exec();
 
-    const count = await PostModel.countDocuments({
-        $or: [
-            { title: { $regex: q, $options: "i" }},
-            { text: { $regex: q, $options: "i" }},
-            { tags: { $in: [new RegExp(q, "i")] }},
-        ]
-    })
+        const count = await PostModel.countDocuments({
+            $or: [
+                { title: { $regex: q, $options: "i" }},
+                { text: { $regex: q, $options: "i" }},
+                { tags: { $in: [new RegExp(q, "i")] }},
+            ]
+        });
 
-    res.json({
-        posts,
-        totalPages: Math.ceil(count / limit),
-        currentPage: page,
-    })
-})
+        return res.json({
+            type: 'post',
+            results: posts,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,
+        });
+    }
+    else if (type === 'user') {
+        const users = await UserModel.find({
+            $or: [
+                { name: { $regex: q, $options: "i" }},
+                { bio: { $regex: q, $options: "i" }},
+            ]
+        })
+            .limit(limit * 1)
+            .skip((page - 1) * limit)
+            .exec();
+
+        const count = await UserModel.countDocuments({
+            $or: [
+                { name: { $regex: q, $options: "i" }},
+                { bio: { $regex: q, $options: "i" }},
+            ]
+        });
+
+        return res.json({
+            type: 'user',
+            results: users,
+            totalPages: Math.ceil(count / limit),
+            currentPage: page,
+        });
+    } else {
+        return res.status(400).json({ message: "Неподдерживаемый тип поиска" });
+    }
+});

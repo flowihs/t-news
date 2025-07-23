@@ -10,10 +10,10 @@ const LikeSchema = new mongoose.Schema({
         type: mongoose.Schema.Types.ObjectId,
         ref: "Post",
     },
-    // comment: {
-    //     type: mongoose.Schema.Types.ObjectId,
-    //     ref: "Comment"
-    // },
+    comment: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment"
+    },
     entityType: {
         type: String,
         enum: ["post", "comment"],
