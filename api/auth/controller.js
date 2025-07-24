@@ -46,8 +46,10 @@ export const login = catchAsync( async (req, res) => {
         })
     }
 
-    const isValidPass = await bcrypt.compare(req.body.password,
-        user._doc.passwordHash);
+    const isValidPass = await bcrypt.compare(
+        req.body.password,
+        user._doc.passwordHash
+    );
 
     if (!isValidPass) {
         return res.status(400).json({

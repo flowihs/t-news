@@ -90,59 +90,69 @@ export const search = catchAsync(async (req, res) => {
     }
 
     if (type === 'post') {
-        const posts = await PostModel.find({
-            $or: [
-                { title: { $regex: q, $options: "i" }},
-                { text: { $regex: q, $options: "i" }},
-                { tags: { $in: [new RegExp(q, "i")] }},
-            ]
-        })
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .populate("user")
-            .exec();
-
-        const count = await PostModel.countDocuments({
-            $or: [
-                { title: { $regex: q, $options: "i" }},
-                { text: { $regex: q, $options: "i" }},
-                { tags: { $in: [new RegExp(q, "i")] }},
-            ]
-        });
-
-        return res.json({
-            type: 'post',
-            results: posts,
-            totalPages: Math.ceil(count / limit),
-            currentPage: page,
-        });
+        const result = await searchPosts(q, page, limit);
+        return res.json(result);
     }
     else if (type === 'user') {
-        const users = await UserModel.find({
-            $or: [
-                { name: { $regex: q, $options: "i" }},
-                { bio: { $regex: q, $options: "i" }},
-            ]
-        })
-            .limit(limit * 1)
-            .skip((page - 1) * limit)
-            .exec();
-
-        const count = await UserModel.countDocuments({
-            $or: [
-                { name: { $regex: q, $options: "i" }},
-                { bio: { $regex: q, $options: "i" }},
-            ]
-        });
-
-        return res.json({
-            type: 'user',
-            results: users,
-            totalPages: Math.ceil(count / limit),
-            currentPage: page,
-        });
+        const result = await searchUsers(q, page, limit);
+        return res.json(result);
     }
     else {
         return res.status(400).json({ message: "Неподдерживаемый тип поиска" });
     }
 });
+
+const searchPosts = async (q, page, limit) => {
+    const posts = await PostModel.find({
+        $or: [
+            { title: { $regex: q, $options: "i" }},
+            { text: { $regex: q, $options: "i" }},
+            { tags: { $in: [new RegExp(q, "i")] }},
+        ]
+    })
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .populate("user")
+        .exec();
+
+    const count = await PostModel.countDocuments({
+        $or: [
+            { title: { $regex: q, $options: "i" }},
+            { text: { $regex: q, $options: "i" }},
+            { tags: { $in: [new RegExp(q, "i")] }},
+        ]
+    });
+
+    return {
+        type: 'post',
+        results: posts,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+    };
+};
+
+const searchUsers = async (q, page, limit) => {
+    const users = await UserModel.find({
+        $or: [
+            { name: { $regex: q, $options: "i" }},
+            { bio: { $regex: q, $options: "i" }},
+        ]
+    })
+        .limit(limit * 1)
+        .skip((page - 1) * limit)
+        .exec();
+
+    const count = await UserModel.countDocuments({
+        $or: [
+            { name: { $regex: q, $options: "i" }},
+            { bio: { $regex: q, $options: "i" }},
+        ]
+    });
+
+    return {
+        type: 'user',
+        results: users,
+        totalPages: Math.ceil(count / limit),
+        currentPage: page,
+    };
+};

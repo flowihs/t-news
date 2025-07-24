@@ -22,9 +22,15 @@ const PostSchema = mongoose.Schema({
         ref: "User",
         required: true,
     },
+    likesCount: {
+        type: Number,
+        default: 0
+    },
+    commentsCount: {
+        type: Number,
+        default: 0
+    },
     imageUrl: String,
-    likesCount: { type: Number, default: 0 },
-    commentsCount: { type: Number, default: 0 },
 }, {
     timestamp: true
 });
